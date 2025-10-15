@@ -3,7 +3,6 @@ extends Node3D
 
 const VERTEX_COLOR = preload("res://addons/vertex_painter/shaders/vertex_color.tres")
 
-@onready var enable_check_box = $"../VBoxContainer/EnableCheckBox"
 @onready var space: PhysicsDirectSpaceState3D = get_world_3d().direct_space_state
 @onready var color_picker = $"../VBoxContainer/ColorPicker"
 @onready var brush_line_edit = $"../VBoxContainer/BrushLineEdit"
@@ -15,12 +14,14 @@ const VERTEX_COLOR = preload("res://addons/vertex_painter/shaders/vertex_color.t
 var editor_interface: EditorInterface
 var screen := ""
 var mesh_i: MeshInstance3D = null
-var error := false
 var click_active := false
 var active_mdt := MeshDataTool.new()
 var pre_mat
 var brush_size := 1
 var working := false
+
+## Remember if the instance was locked, so we don't change the state when ending our draw
+var instance_was_locked: bool
 
 func set_interface(_editor_interface: EditorInterface) -> void:
 	editor_interface = _editor_interface
@@ -93,16 +94,19 @@ func click_raycast2(offset := Vector2(0,0)) -> Vector3:
 	debug.global_position = point
 	return point
 
-func start_paint(event: InputEvent) -> void:
+func start_paint(event: InputEvent) -> void:	
 	mouse_camera_3d.show()
 	if show_debug_check_box.button_pressed:
 		debug.show()
-	mesh_i.set_meta("_edit_lock_", true)
 	mouse_camera_3d.show()
 	
 	var click_location := click_raycast2()
 	if click_location.is_finite():
-		#print(click_location)
+		if not mesh_i.mesh is ArrayMesh:
+			var surface_tool := SurfaceTool.new()
+			surface_tool.create_from(mesh_i.mesh, 0)
+			mesh_i.mesh = surface_tool.commit()
+		
 		active_mdt.create_from_surface(mesh_i.mesh, 0)
 		mesh_i.mesh = ArrayMesh.new()
 		active_mdt.commit_to_surface(mesh_i.mesh)
@@ -115,7 +119,7 @@ func start_paint_legacy(event: InputEvent) -> void:
 	mesh_i.create_trimesh_collision()
 	mesh_i.get_children()[0].hide()
 	mesh_i.set_meta("_edit_lock_", true)
-	
+
 	var click_location = click_raycast()
 	if click_location:
 		active_mdt.create_from_surface(mesh_i.mesh, 0)
@@ -126,14 +130,12 @@ func start_paint_legacy(event: InputEvent) -> void:
 		process_move(event)
 		click_active = true
 
-func stop_paint() -> void:
+func stop_paint() -> void:	
 	mouse_camera_3d.hide()
 	debug.hide()
 	if pre_mat == null:
 		pre_mat = VERTEX_COLOR
 		mesh_i.set_surface_override_material(0, pre_mat)
-	
-	mesh_i.set_meta("_edit_lock_", false)
 	
 	# legacy - remove static body children
 	#for c in mesh_i.get_children():
@@ -145,32 +147,11 @@ func process_click(event: InputEvent) -> void:
 	var mb_event: InputEventMouseButton = event
 
 	if mb_event.button_index == 1:
+		if mb_event.pressed:
+			start_paint(event)
 		
-		# get first mesh instanced selected node
-		var nodes := editor_interface.get_selection().get_selected_nodes()
-		mesh_i = null
-		for n in nodes:
-			if n is MeshInstance3D:
-				mesh_i = n
-				break
-		
-		if mesh_i and mesh_i.name == "Debug":
-			mesh_i = null
-		
-		error = false
-		if mesh_i == null:
-			err("You must select a MeshInstance3D to vertex paint.")
-			error = true
-		if len(nodes) > 1:
-			err("Only select one mesh instance in the scene tree for painting.")
-			error = true
-		
-		if not error:
-			if mb_event.pressed:
-				start_paint(event)
-			
-			if not mb_event.pressed:
-				stop_paint()
+		if not mb_event.pressed:
+			stop_paint()
 
 func paint() -> void:
 		var result2 = click_raycast2()
@@ -263,32 +244,43 @@ func set_brush_size() -> void:
 func _ready() -> void:
 	set_brush_size()
 
-func _input(event: InputEvent) -> void:
-	if not enable_check_box.button_pressed: return
-	
-	if screen != "3D": return
+func _forward_3d_gui_input(_cam: Camera3D, event: InputEvent) -> int:
+	if screen != "3D": return EditorPlugin.AFTER_GUI_INPUT_PASS
 	
 	if not (event is InputEventMouseButton) and \
-		not (event is InputEventMouseMotion): return
+		not (event is InputEventMouseMotion): return EditorPlugin.AFTER_GUI_INPUT_PASS
 	
-	# check within viewport bounds
-	var evnp: Vector2 = event.position
-	var scrn := editor_interface.get_editor_main_screen()
-	var s_pos := scrn.global_position
-	var s_size := scrn.size
-	if evnp.x > s_pos.x \
-		and evnp.y > s_pos.y + 30 \
-		and evnp.x < s_pos.x + s_size.x \
-		and evnp.y < s_pos.y + s_size.y:
-		if event is InputEventMouseButton:
-			process_click(event)
-			
-		if event is InputEventMouseMotion:
-			if click_active and not error:
-				process_move(event)
+	if event is InputEventMouseButton:
+		process_click(event)
 		
+	if event is InputEventMouseMotion:
+		if click_active:
+			process_move(event)
+	
+	return EditorPlugin.AFTER_GUI_INPUT_STOP if click_active else EditorPlugin.AFTER_GUI_INPUT_PASS
+
 func _on_brush_line_edit_text_submitted(new_text):
 	set_brush_size()
 
 func _on_brush_line_edit_focus_exited():
 	set_brush_size()
+
+func enable(target: MeshInstance3D) -> void:
+	if is_enabled():
+		disable()
+	
+	mesh_i = target
+	instance_was_locked = mesh_i.get_meta("_edit_lock_", false)
+	mesh_i.set_meta("_edit_lock_", true)
+	mesh_i.update_gizmos()
+
+func disable() -> void:
+	if is_instance_valid(mesh_i):
+		if !instance_was_locked:
+			mesh_i.remove_meta("_edit_lock_")
+		mesh_i.update_gizmos()
+			
+	mesh_i = null
+
+func is_enabled() -> bool:
+	return is_instance_valid(mesh_i)
