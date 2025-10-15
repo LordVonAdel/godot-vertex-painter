@@ -156,7 +156,7 @@ func process_click(event: InputEvent) -> void:
 func paint() -> void:
 		var result2 = click_raycast2()
 		if result2.is_finite():
-			var vertices := get_n_closest_vertices(active_mdt, mesh_i.global_position, \
+			var vertices := get_n_closest_vertices(active_mdt, mesh_i.global_transform, \
 				result2, brush_size)
 			for idx in vertices:
 				active_mdt.set_vertex_color(idx, color_picker.color)
@@ -166,7 +166,7 @@ func paint() -> void:
 func legacy_paint() -> void:
 	var result = click_raycast()
 	if "position" in result:
-		var vertices := get_n_closest_vertices(active_mdt, mesh_i.global_position, \
+		var vertices := get_n_closest_vertices(active_mdt, mesh_i.global_transform, \
 			result.position, brush_size)
 		for idx in vertices:
 			active_mdt.set_vertex_color(idx, color_picker.color)
@@ -185,12 +185,12 @@ func process_move(event: InputEvent) -> void:
 		await get_tree().create_timer(0.05).timeout
 		working = false
 	
-func get_n_closest_vertices(mdt: MeshDataTool, mesh_pos: Vector3, \
+func get_n_closest_vertices(mdt: MeshDataTool, mesh_transform: Transform3D, \
 	hit_pos: Vector3, n: int) -> Array[int]:
 	
 	var vertices := []
 	for v in range(mdt.get_vertex_count()):
-		var v_pos := mdt.get_vertex(v) + mesh_pos
+		var v_pos := mesh_transform * mdt.get_vertex(v)
 		var dist := hit_pos.distance_squared_to(v_pos)
 		
 		if len(vertices) < n:
