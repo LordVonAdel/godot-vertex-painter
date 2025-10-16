@@ -37,8 +37,6 @@ https://github.com/bikemurt/godot-vertex-painter/assets/23486102/fea58b3f-8b71-4
 
 ## ⚠️ Limitations
 
-- Only imported meshes will work (or ArrayMesh, which have a clear_surfaces() method)
-
 ## 🏠 Links
 
 - [Homepage](https://www.michaeljared.ca/)
