@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://bnfl4nwux8mc4"]
+[gd_scene load_steps=9 format=3 uid="uid://bnfl4nwux8mc4"]
 
 [ext_resource type="Script" uid="uid://dobpv4xos5msa" path="res://addons/vertex_painter/vertex_painter_ui.gd" id="1_vhkhp"]
 [ext_resource type="Script" uid="uid://bgwl2arbuma7" path="res://addons/vertex_painter/vertex_painter_3d.gd" id="2_vflpc"]
@@ -17,10 +17,8 @@ shader_parameter/camera_far = 10000.0
 [sub_resource type="SphereMesh" id="SphereMesh_8olv6"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_eghqw"]
-albedo_color = Color(0.933333, 1, 0, 1)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_q845s"]
-albedo_color = Color(0.26676348, 0.4145387, 1, 1)
+transparency = 1
+albedo_color = Color(1, 1, 1, 0.07450981)
 
 [node name="VertexPainter" type="CenterContainer" node_paths=PackedStringArray("input_color", "input_brush_size", "input_enabled")]
 anchors_preset = 15
@@ -57,15 +55,13 @@ text = "Brush Size:"
 [node name="BrushLineEdit" type="SpinBox" parent="VBoxContainer"]
 layout_mode = 2
 step = 0.01
+value = 0.25
+suffix = "units"
 select_all_on_focus = true
 
-[node name="ShowDebugCheckBox" type="CheckBox" parent="VBoxContainer"]
-auto_translate_mode = 1
-layout_mode = 2
-text = "Show Debug Sphere"
-
-[node name="VertexPainter3D" type="Node3D" parent="."]
+[node name="VertexPainter3D" type="Node3D" parent="." node_paths=PackedStringArray("preview_sphere")]
 script = ExtResource("2_vflpc")
+preview_sphere = NodePath("../PreviewSphere")
 
 [node name="SubViewport" type="SubViewport" parent="."]
 handle_input_locally = false
@@ -92,18 +88,11 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.5)
 mesh = SubResource("QuadMesh_4magw")
 surface_material_override/0 = SubResource("ShaderMaterial_yrme8")
 
-[node name="Debug" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.1, 0, 0, 0, 0.1, 0, 0, 0, 0.1, 0, 0, 0)
+[node name="PreviewSphere" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.25, 0, 0, 0, 0.25, 0, 0, 0, 0.25, 0, 0, 0)
 visible = false
 layers = 2
 mesh = SubResource("SphereMesh_8olv6")
 surface_material_override/0 = SubResource("StandardMaterial3D_eghqw")
-
-[node name="DebugVertex" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.1, 0, 0, 0, 0.1, 0, 0, 0, 0.1, 0, 0, 0)
-visible = false
-layers = 2
-mesh = SubResource("SphereMesh_8olv6")
-surface_material_override/0 = SubResource("StandardMaterial3D_q845s")
 
 [connection signal="focus_exited" from="VBoxContainer/BrushLineEdit" to="VertexPainter3D" method="_on_brush_line_edit_focus_exited"]

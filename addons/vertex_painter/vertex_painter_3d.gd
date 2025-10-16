@@ -5,12 +5,14 @@ const VERTEX_COLOR = preload("res://addons/vertex_painter/shaders/vertex_color.t
 
 @onready var mouse_camera_3d: Camera3D = $"../SubViewport/MouseCamera3D"
 @onready var sub_viewport = $"../SubViewport"
-@onready var debug: MeshInstance3D = $"../Debug"
-@onready var debug_vertex: MeshInstance3D = $"../DebugVertex"
-@onready var show_debug_check_box = $"../VBoxContainer/ShowDebugCheckBox"
+
+@export var preview_sphere: MeshInstance3D
 
 ## Brush size in world units
-var brush_size: float = 3.0
+var brush_size: float = 0.0 : 
+	set(value):
+		preview_sphere.scale = Vector3(value, value, value)
+		brush_size = value
 
 var brush_color: Color = Color.WHITE
 
@@ -37,10 +39,7 @@ func _process(_delta: float) -> void:
 	var _cursor = raycast()
 	if _cursor.is_finite():
 		cursor_position = _cursor
-		debug.global_position = cursor_position
-	
-	debug.visible = show_debug_check_box.button_pressed
-	debug_vertex.visible = show_debug_check_box.button_pressed
+		preview_sphere.global_position = cursor_position
 
 func raycast() -> Vector3:
 	var viewport := EditorInterface.get_editor_viewport_3d()
@@ -76,7 +75,6 @@ func raycast() -> Vector3:
 		var depth: float = normalized_distance * mouse_camera_3d.far
 		point = mouse_camera_3d.global_position + direction * depth
 	
-	debug.global_position = point
 	return point
 
 func start_paint(event: InputEvent) -> void:	
@@ -108,7 +106,7 @@ func paint() -> void:
 		active_mdt.commit_to_surface(mesh_i.mesh)
 
 func get_vertices_in_radius(mdt: MeshDataTool, mesh_transform: Transform3D, center: Vector3, radius: float) -> PackedInt32Array:
-	var radius_squared := radius * radius
+	var radius_squared := (radius * 0.5) * (radius * 0.5)
 	var local_point := center * mesh_transform
 
 	var out = PackedInt32Array()
@@ -159,6 +157,8 @@ func enable(target: MeshInstance3D) -> void:
 	mesh_i.set_surface_override_material(0, VERTEX_COLOR)
 	mouse_camera_3d.show()
 
+	preview_sphere.show()
+
 func disable() -> void:
 	if is_instance_valid(mesh_i):
 		if !instance_was_locked:
@@ -167,8 +167,7 @@ func disable() -> void:
 			
 	mesh_i = null
 	mouse_camera_3d.hide()
-	debug.hide()
-	debug_vertex.hide()
+	preview_sphere.hide()
 
 func is_enabled() -> bool:
 	return is_instance_valid(mesh_i)
