@@ -16,10 +16,17 @@ https://github.com/bikemurt/godot-vertex-painter/assets/23486102/fea58b3f-8b71-4
 ---
 
 **Godot Versions Tested**
-- v4.3.5 dev release
-- v4.1.1
+- v4.5.stable
 
 ---
+**V2.1: October 16, 2025**
+- Now any Mesh resource can be used as a base
+- Moved controls to top of viewport
+- Added weight slider
+- Added preview of brush size
+- Added blend modes. Currently there are Mix, Add, Subtract and Multiply
+- Improved accuracy
+
 **V2.0: May 6, 2024**
 - Paint directly on MeshInstance3Ds. StaticBodies are no longer required!
 - This is thanks to an updated algorithm to find the 3D surface: https://twitter.com/_michaeljared/status/1787020920751579407
@@ -32,8 +39,9 @@ https://github.com/bikemurt/godot-vertex-painter/assets/23486102/fea58b3f-8b71-4
 1. Download this [repository](https://github.com/bikemurt/godot-vertex-painter/), or download from the [Godot Asset Library](https://godotengine.org/asset-library/asset/2470).
     - Import the addons folder into your project (if it already isn't present).
 2. Activate the Vertex Painter addon under Project > Project Settings > Plugins. If an error dialog appears, restart the engine and try activating it again.
-3. Add a MeshInstance3D to the scene which you wish to paint vertex colors]
-4. Check "Enable Vertex Painting", click the MeshInstance3D, set the Color using the color picker, and start painting on screen
+3. Add a MeshInstance3D to the scene which you wish to paint vertex colors.
+4. Select the MeshInstance3D and click on the "Vertex Paint" button in the toolbar.
+5. When finished, click on the "Exit" button to use the editor normally again.
 
 ## ⚠️ Limitations
 
