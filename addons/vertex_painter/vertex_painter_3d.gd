@@ -39,9 +39,6 @@ var cursor_position: Vector3
 ## Used to push into undo history
 var previous_state: ArrayMesh
 
-## Remember if the instance was locked, so we don't change the state when ending our draw
-var instance_was_locked: bool
-
 func _process(_delta: float) -> void:
 	if !is_enabled():
 		return
@@ -169,14 +166,8 @@ func _forward_3d_gui_input(_cam: Camera3D, event: InputEvent) -> int:
 	return EditorPlugin.AFTER_GUI_INPUT_STOP if click_active else EditorPlugin.AFTER_GUI_INPUT_PASS
 
 func enable(target: MeshInstance3D) -> void:
-	if is_enabled():
-		disable()
-	
 	mesh_i = target
-	instance_was_locked = mesh_i.get_meta("_edit_lock_", false)
-	mesh_i.set_meta("_edit_lock_", true)
-	mesh_i.update_gizmos()
-	
+
 	if not mesh_i.mesh is ArrayMesh:
 		var surface_tool := SurfaceTool.new()
 		surface_tool.create_from(mesh_i.mesh, 0)
@@ -193,11 +184,6 @@ func enable(target: MeshInstance3D) -> void:
 	enabled_changed.emit()
 
 func disable() -> void:
-	if is_instance_valid(mesh_i):
-		if !instance_was_locked:
-			mesh_i.remove_meta("_edit_lock_")
-		mesh_i.update_gizmos()
-
 	mesh_i = null
 	mouse_camera_3d.hide()
 	preview_sphere.hide()

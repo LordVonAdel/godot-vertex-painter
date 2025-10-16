@@ -24,6 +24,7 @@ https://github.com/bikemurt/godot-vertex-painter/assets/23486102/fea58b3f-8b71-4
 - Moved controls to top of viewport
 - Added weight slider
 - Added preview of brush size
+- Added Undo
 - Added blend modes. Currently there are Mix, Add, Subtract and Multiply
 - Improved accuracy
 
