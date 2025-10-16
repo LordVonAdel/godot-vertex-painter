@@ -8,6 +8,13 @@ const VERTEX_COLOR = preload("res://addons/vertex_painter/shaders/vertex_color.t
 
 @export var preview_sphere: MeshInstance3D
 
+enum BlendModes {
+	MIX = 0,
+	ADD = 1,
+	SUBTRACT = 2,
+	MULTIPLY = 3
+}
+
 ## Brush size in world units
 var brush_size: float = 0.0 : 
 	set(value):
@@ -15,6 +22,16 @@ var brush_size: float = 0.0 :
 		brush_size = value
 
 var brush_color: Color = Color.WHITE
+
+var brush_weight: float = 1.0
+
+var brush_blend_mode: BlendModes = BlendModes.MIX
+
+## Should the resulting color be clamped between 0 and 1?
+var brush_clamp: bool
+
+## Should the resulting color be a normalized vector?
+var brush_normalize: bool
 
 var mesh_i: MeshInstance3D = null
 var click_active := false
@@ -101,7 +118,24 @@ func paint() -> void:
 	var vertices := get_vertices_in_radius(active_mdt, mesh_i.global_transform, cursor_position, brush_size)
 	
 	for idx in vertices:
-		active_mdt.set_vertex_color(idx, brush_color)
+		var old_color = active_mdt.get_vertex_color(idx)
+		var new_color = brush_color
+
+		match brush_blend_mode:
+			BlendModes.MIX:
+				new_color = lerp(old_color, brush_color, brush_weight)
+			BlendModes.ADD:
+				new_color = old_color + brush_color * brush_weight
+			BlendModes.SUBTRACT:
+				new_color = old_color - brush_color * brush_weight
+			BlendModes.MULTIPLY:
+				new_color = lerp(old_color, old_color * brush_color, brush_weight)
+
+		if brush_clamp:
+			new_color = new_color.clamp()
+		
+
+		active_mdt.set_vertex_color(idx, new_color)
 		mesh_i.mesh.clear_surfaces()
 		active_mdt.commit_to_surface(mesh_i.mesh)
 

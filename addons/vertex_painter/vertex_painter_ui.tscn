@@ -20,7 +20,7 @@ shader_parameter/camera_far = 10000.0
 transparency = 1
 albedo_color = Color(1, 1, 1, 0.07450981)
 
-[node name="VertexPainter" type="CenterContainer" node_paths=PackedStringArray("input_color", "input_brush_size", "input_enabled")]
+[node name="VertexPainter" type="CenterContainer" node_paths=PackedStringArray("input_color", "input_brush_size", "input_enabled", "input_blend_mode", "input_weight")]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -29,8 +29,10 @@ grow_vertical = 2
 size_flags_vertical = 3
 script = ExtResource("1_vhkhp")
 input_color = NodePath("VBoxContainer/ColorPicker")
-input_brush_size = NodePath("VBoxContainer/BrushLineEdit")
+input_brush_size = NodePath("VBoxContainer/BrushSize")
 input_enabled = NodePath("VBoxContainer/EnableCheckBox")
+input_blend_mode = NodePath("VBoxContainer/BlendModes")
+input_weight = NodePath("VBoxContainer/BrushWeight")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
 layout_mode = 2
@@ -52,12 +54,40 @@ presets_visible = false
 layout_mode = 2
 text = "Brush Size:"
 
-[node name="BrushLineEdit" type="SpinBox" parent="VBoxContainer"]
+[node name="BrushSize" type="HSlider" parent="VBoxContainer"]
 layout_mode = 2
+min_value = 0.1
+max_value = 10.0
 step = 0.01
-value = 0.25
-suffix = "units"
-select_all_on_focus = true
+value = 0.5
+allow_greater = true
+
+[node name="Label2" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "Brush Weight:"
+
+[node name="BrushWeight" type="HSlider" parent="VBoxContainer"]
+layout_mode = 2
+max_value = 1.0
+step = 0.01
+value = 1.0
+
+[node name="Label3" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "Blend Mode:"
+
+[node name="BlendModes" type="OptionButton" parent="VBoxContainer"]
+layout_mode = 2
+selected = 0
+item_count = 4
+popup/item_0/text = "Mix"
+popup/item_0/id = 0
+popup/item_1/text = "Add"
+popup/item_1/id = 1
+popup/item_2/text = "Subtract"
+popup/item_2/id = 2
+popup/item_3/text = "Multiply"
+popup/item_3/id = 3
 
 [node name="VertexPainter3D" type="Node3D" parent="." node_paths=PackedStringArray("preview_sphere")]
 script = ExtResource("2_vflpc")
@@ -95,4 +125,4 @@ layers = 2
 mesh = SubResource("SphereMesh_8olv6")
 surface_material_override/0 = SubResource("StandardMaterial3D_eghqw")
 
-[connection signal="focus_exited" from="VBoxContainer/BrushLineEdit" to="VertexPainter3D" method="_on_brush_line_edit_focus_exited"]
+[connection signal="focus_exited" from="VBoxContainer/BrushSize" to="VertexPainter3D" method="_on_brush_line_edit_focus_exited"]
