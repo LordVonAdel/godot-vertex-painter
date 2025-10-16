@@ -1,6 +1,5 @@
 @tool
 extends CenterContainer
-class_name VertexPainter
 
 @onready var vertex_painter_3d = $VertexPainter3D
 
@@ -17,7 +16,7 @@ func _exit_tree() -> void:
 func _ready() -> void:
 	input_color.color_changed.connect(func(_color) -> void: update_from_ui())
 	input_brush_size.value_changed.connect(func(_value) -> void: update_from_ui())
-	input_enabled.pressed.connect(func() -> void: _on_enable_check_box_pressed())
+	input_enabled.pressed.connect(func() -> void: _update_enabled())
 
 func update_from_ui() -> void:
 	vertex_painter_3d.brush_size = input_brush_size.value
@@ -27,7 +26,7 @@ func _selection_changed() -> void:
 	vertex_painter_3d.disable()
 	input_enabled.button_pressed = false
 
-func _on_enable_check_box_pressed():
+func _update_enabled():
 	var target = find_target()
 	
 	if input_enabled.button_pressed:
@@ -36,6 +35,7 @@ func _on_enable_check_box_pressed():
 			vertex_painter_3d.err("You must select a MeshInstance3D to vertex paint.")
 			return
 		EditorInterface.set_main_screen_editor("3D")
+		update_from_ui()
 		vertex_painter_3d.enable(target)
 	else:
 		vertex_painter_3d.disable()

@@ -2,9 +2,9 @@
 extends EditorPlugin
 
 #var dock
-const MAIN_SCREEN = preload("res://addons/vertex_painter/v2/vertex_painter.tscn")
+const MAIN_SCREEN = preload("res://addons/vertex_painter/vertex_painter_ui.tscn")
 
-var main_panel_instance: VertexPainter
+var main_panel_instance
 
 func _enter_tree():
 	main_panel_instance = MAIN_SCREEN.instantiate()
