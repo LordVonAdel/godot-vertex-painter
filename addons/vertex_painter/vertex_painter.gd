@@ -8,10 +8,6 @@ var main_panel_instance: VertexPainter
 
 func _enter_tree():
 	main_panel_instance = MAIN_SCREEN.instantiate()
-	
-	main_panel_instance.set_interface(get_editor_interface())
-	main_screen_changed.connect(main_panel_instance.set_screen_name)
-	
 	add_control_to_dock(EditorPlugin.DOCK_SLOT_LEFT_UR, main_panel_instance)
 
 func _exit_tree():
