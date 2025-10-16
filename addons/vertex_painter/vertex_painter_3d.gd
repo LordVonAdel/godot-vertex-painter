@@ -5,7 +5,6 @@ const VERTEX_COLOR = preload("res://addons/vertex_painter/shaders/vertex_color.t
 
 @onready var mouse_camera_3d: Camera3D = $"../SubViewport/MouseCamera3D"
 @onready var sub_viewport = $"../SubViewport"
-
 @export var preview_sphere: MeshInstance3D
 
 enum BlendModes {
@@ -27,18 +26,15 @@ var brush_weight: float = 1.0
 
 var brush_blend_mode: BlendModes = BlendModes.MIX
 
-## Should the resulting color be clamped between 0 and 1?
-var brush_clamp: bool
-
-## Should the resulting color be a normalized vector?
-var brush_normalize: bool
-
 var mesh_i: MeshInstance3D = null
 var click_active := false
 var active_mdt := MeshDataTool.new()
 var pre_mat
 var working := false
 var cursor_position: Vector3
+
+## Used to push into undo history
+var previous_state: ArrayMesh
 
 ## Remember if the instance was locked, so we don't change the state when ending our draw
 var instance_was_locked: bool
@@ -95,6 +91,9 @@ func raycast() -> Vector3:
 	return point
 
 func start_paint(event: InputEvent) -> void:	
+	previous_state = mesh_i.mesh.duplicate()
+	active_mdt.create_from_surface(mesh_i.mesh, 0)
+	
 	click_active = true
 	process_move(event)
 
@@ -103,6 +102,12 @@ func stop_paint() -> void:
 		pre_mat = VERTEX_COLOR
 		mesh_i.set_surface_override_material(0, pre_mat)
 	click_active = false
+	
+	
+	var undo_redo := EditorInterface.get_editor_undo_redo()
+	undo_redo.create_action("Vertex Paint")
+	undo_redo.add_undo_property(mesh_i, "mesh", previous_state)
+	undo_redo.commit_action(true)
 
 func process_click(event: InputEvent) -> void:
 	var mb_event: InputEventMouseButton = event
@@ -130,10 +135,6 @@ func paint() -> void:
 				new_color = old_color - brush_color * brush_weight
 			BlendModes.MULTIPLY:
 				new_color = lerp(old_color, old_color * brush_color, brush_weight)
-
-		if brush_clamp:
-			new_color = new_color.clamp()
-		
 
 		active_mdt.set_vertex_color(idx, new_color)
 		mesh_i.mesh.clear_surfaces()
