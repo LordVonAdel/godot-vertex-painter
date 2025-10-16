@@ -9,6 +9,7 @@ const VERTEX_COLOR = preload("res://addons/vertex_painter/shaders/vertex_color.t
 @onready var mouse_camera_3d: Camera3D = $"../SubViewport/MouseCamera3D"
 @onready var sub_viewport = $"../SubViewport"
 @onready var debug: MeshInstance3D = $"../Debug"
+@onready var debug_vertex: MeshInstance3D = $"../DebugVertex"
 @onready var show_debug_check_box = $"../VBoxContainer/ShowDebugCheckBox"
 
 var editor_interface: EditorInterface
@@ -19,6 +20,7 @@ var active_mdt := MeshDataTool.new()
 var pre_mat
 var brush_size := 1
 var working := false
+var cursor_position: Vector3
 
 ## Remember if the instance was locked, so we don't change the state when ending our draw
 var instance_was_locked: bool
@@ -34,6 +36,22 @@ func err(message: String) -> void:
 
 func msg(message: String) -> void:
 	print("Vertex painter [INFO]: " + message)
+
+func _process(delta: float) -> void:
+	if !is_enabled():
+		return
+	
+	var _cursor = click_raycast2()
+	if _cursor.is_finite():
+		cursor_position = _cursor
+		debug.global_position = cursor_position
+	
+	debug.visible = show_debug_check_box.button_pressed
+	debug_vertex.visible = show_debug_check_box.button_pressed
+	
+	var closest = get_n_closest_vertices(active_mdt, mesh_i.global_transform, _cursor, 1)
+	if closest.size() > 0:
+		debug_vertex.global_position = mesh_i.global_transform * active_mdt.get_vertex(closest[0])
 
 # OLD ALGORITHM
 func click_raycast():
@@ -77,7 +95,7 @@ func click_raycast2(offset := Vector2(0,0)) -> Vector3:
 		var vp_tex: ViewportTexture = sub_viewport.get_texture()
 		var vp_img := vp_tex.get_image()
 		
-		var screen_depth = vp_img.get_pixel(0, 0).srgb_to_linear()
+		var screen_depth = vp_img.get_pixel(1, 1).srgb_to_linear()
 		
 		var screen_rg = Vector2(screen_depth.r, screen_depth.g)
 		var normalized_distance: float = screen_rg.dot(Vector2(1, 1.0 / 255.0))
@@ -95,25 +113,8 @@ func click_raycast2(offset := Vector2(0,0)) -> Vector3:
 	return point
 
 func start_paint(event: InputEvent) -> void:	
-	mouse_camera_3d.show()
-	if show_debug_check_box.button_pressed:
-		debug.show()
-	mouse_camera_3d.show()
-	
-	var click_location := click_raycast2()
-	if click_location.is_finite():
-		if not mesh_i.mesh is ArrayMesh:
-			var surface_tool := SurfaceTool.new()
-			surface_tool.create_from(mesh_i.mesh, 0)
-			mesh_i.mesh = surface_tool.commit()
-		
-		active_mdt.create_from_surface(mesh_i.mesh, 0)
-		mesh_i.mesh = ArrayMesh.new()
-		active_mdt.commit_to_surface(mesh_i.mesh)
-		pre_mat = mesh_i.get_surface_override_material(0)
-		mesh_i.set_surface_override_material(0, VERTEX_COLOR)
-		process_move(event)
-		click_active = true
+	click_active = true
+	process_move(event)
 
 func start_paint_legacy(event: InputEvent) -> void:
 	mesh_i.create_trimesh_collision()
@@ -131,8 +132,6 @@ func start_paint_legacy(event: InputEvent) -> void:
 		click_active = true
 
 func stop_paint() -> void:	
-	mouse_camera_3d.hide()
-	debug.hide()
 	if pre_mat == null:
 		pre_mat = VERTEX_COLOR
 		mesh_i.set_surface_override_material(0, pre_mat)
@@ -154,14 +153,13 @@ func process_click(event: InputEvent) -> void:
 			stop_paint()
 
 func paint() -> void:
-		var result2 = click_raycast2()
-		if result2.is_finite():
-			var vertices := get_n_closest_vertices(active_mdt, mesh_i.global_transform, \
-				result2, brush_size)
-			for idx in vertices:
-				active_mdt.set_vertex_color(idx, color_picker.color)
-				mesh_i.mesh.clear_surfaces()
-				active_mdt.commit_to_surface(mesh_i.mesh)
+	var vertices := get_n_closest_vertices(active_mdt, mesh_i.global_transform, \
+		cursor_position, brush_size)
+	
+	for idx in vertices:
+		active_mdt.set_vertex_color(idx, color_picker.color)
+		mesh_i.mesh.clear_surfaces()
+		active_mdt.commit_to_surface(mesh_i.mesh)
 
 func legacy_paint() -> void:
 	var result = click_raycast()
@@ -187,19 +185,19 @@ func process_move(event: InputEvent) -> void:
 	
 func get_n_closest_vertices(mdt: MeshDataTool, mesh_transform: Transform3D, \
 	hit_pos: Vector3, n: int) -> Array[int]:
+	var hit_local = hit_pos * mesh_transform
 	
 	var vertices := []
 	for v in range(mdt.get_vertex_count()):
-		var v_pos := mesh_transform * mdt.get_vertex(v)
-		var dist := hit_pos.distance_squared_to(v_pos)
+		var v_pos := mdt.get_vertex(v)
+		var dist := hit_local.distance_squared_to(v_pos)
 		
 		if len(vertices) < n:
 			# fill with the first n vertices
 			vertices.append([v, dist])
 		else:
 			# after array fill, determine if largest should be replaced
-			var changes := []
-			var furthest_dist := 0
+			var furthest_dist := 0.0
 			var furthest_index := -1
 			for index in range(len(vertices)):
 				var vertex: Variant = vertices[index]
@@ -210,6 +208,7 @@ func get_n_closest_vertices(mdt: MeshDataTool, mesh_transform: Transform3D, \
 					furthest_index = index
 			
 			# largest element gets kicked out for this one
+			
 			if dist < furthest_dist:
 				vertices[furthest_index] = [v, dist]
 	
@@ -219,11 +218,12 @@ func get_n_closest_vertices(mdt: MeshDataTool, mesh_transform: Transform3D, \
 		v_indices.append(vertex[0])
 	return v_indices
 
-func get_closest_vertex(mdt: MeshDataTool, mesh_pos: Vector3, hit_pos: Vector3) -> int:
+
+func get_closest_vertex(mdt: MeshDataTool, transform: Transform3D, hit_pos: Vector3) -> int:
 	var closest_dist := INF
 	var closest_index := -1
 	for v in range(mdt.get_vertex_count()):
-		var v_pos := mdt.get_vertex(v) + mesh_pos
+		var v_pos := transform * mdt.get_vertex(v)
 		var dist := hit_pos.distance_squared_to(v_pos)
 		if dist < closest_dist:
 			closest_dist = dist
@@ -273,6 +273,18 @@ func enable(target: MeshInstance3D) -> void:
 	instance_was_locked = mesh_i.get_meta("_edit_lock_", false)
 	mesh_i.set_meta("_edit_lock_", true)
 	mesh_i.update_gizmos()
+	
+	if not mesh_i.mesh is ArrayMesh:
+		var surface_tool := SurfaceTool.new()
+		surface_tool.create_from(mesh_i.mesh, 0)
+		mesh_i.mesh = surface_tool.commit()
+	
+	active_mdt.create_from_surface(mesh_i.mesh, 0)
+	mesh_i.mesh = ArrayMesh.new()
+	active_mdt.commit_to_surface(mesh_i.mesh)
+	pre_mat = mesh_i.get_surface_override_material(0)
+	mesh_i.set_surface_override_material(0, VERTEX_COLOR)
+	mouse_camera_3d.show()
 
 func disable() -> void:
 	if is_instance_valid(mesh_i):
@@ -281,6 +293,9 @@ func disable() -> void:
 		mesh_i.update_gizmos()
 			
 	mesh_i = null
+	mouse_camera_3d.hide()
+	debug.hide()
+	debug_vertex.hide()
 
 func is_enabled() -> bool:
 	return is_instance_valid(mesh_i)
