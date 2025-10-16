@@ -1,4 +1,5 @@
 @tool
+class_name VertexPainter3D
 extends Node3D
 
 const VERTEX_COLOR = preload("res://addons/vertex_painter/shaders/vertex_color.tres")
@@ -7,7 +8,9 @@ const VERTEX_COLOR = preload("res://addons/vertex_painter/shaders/vertex_color.t
 @onready var sub_viewport = $"../SubViewport"
 @export var preview_sphere: MeshInstance3D
 
-enum BlendModes {
+signal enabled_changed
+
+enum BlendMode {
 	MIX = 0,
 	ADD = 1,
 	SUBTRACT = 2,
@@ -24,7 +27,7 @@ var brush_color: Color = Color.WHITE
 
 var brush_weight: float = 1.0
 
-var brush_blend_mode: BlendModes = BlendModes.MIX
+var brush_blend_mode: BlendMode = BlendMode.MIX
 
 var mesh_i: MeshInstance3D = null
 var click_active := false
@@ -38,12 +41,6 @@ var previous_state: ArrayMesh
 
 ## Remember if the instance was locked, so we don't change the state when ending our draw
 var instance_was_locked: bool
-
-func err(message: String) -> void:
-	print("Vertex painter [ERROR]: " + message)
-
-func msg(message: String) -> void:
-	print("Vertex painter [INFO]: " + message)
 
 func _process(_delta: float) -> void:
 	if !is_enabled():
@@ -127,13 +124,13 @@ func paint() -> void:
 		var new_color = brush_color
 
 		match brush_blend_mode:
-			BlendModes.MIX:
+			BlendMode.MIX:
 				new_color = lerp(old_color, brush_color, brush_weight)
-			BlendModes.ADD:
+			BlendMode.ADD:
 				new_color = old_color + brush_color * brush_weight
-			BlendModes.SUBTRACT:
+			BlendMode.SUBTRACT:
 				new_color = old_color - brush_color * brush_weight
-			BlendModes.MULTIPLY:
+			BlendMode.MULTIPLY:
 				new_color = lerp(old_color, old_color * brush_color, brush_weight)
 
 		active_mdt.set_vertex_color(idx, new_color)
@@ -193,16 +190,18 @@ func enable(target: MeshInstance3D) -> void:
 	mouse_camera_3d.show()
 
 	preview_sphere.show()
+	enabled_changed.emit()
 
 func disable() -> void:
 	if is_instance_valid(mesh_i):
 		if !instance_was_locked:
 			mesh_i.remove_meta("_edit_lock_")
 		mesh_i.update_gizmos()
-			
+
 	mesh_i = null
 	mouse_camera_3d.hide()
 	preview_sphere.hide()
+	enabled_changed.emit()
 
 func is_enabled() -> bool:
 	return is_instance_valid(mesh_i)

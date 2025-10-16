@@ -1,0 +1,152 @@
+[gd_scene load_steps=10 format=3 uid="uid://dmeqpm3skglm2"]
+
+[ext_resource type="Script" uid="uid://dobpv4xos5msa" path="res://addons/vertex_painter/vertex_painter_ui.gd" id="1_3lenc"]
+[ext_resource type="Script" uid="uid://bgwl2arbuma7" path="res://addons/vertex_painter/vertex_painter_3d.gd" id="2_4gsef"]
+[ext_resource type="Texture2D" uid="uid://djxwwu4jm22dg" path="res://addons/vertex_painter/icon.png" id="2_7gh0f"]
+[ext_resource type="Shader" uid="uid://etvg4calsus4" path="res://addons/vertex_painter/gpu_depth.gdshader" id="3_kb2qk"]
+
+[sub_resource type="Environment" id="Environment_7gh0f"]
+
+[sub_resource type="QuadMesh" id="QuadMesh_lgv7d"]
+size = Vector2(0.1, 0.1)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_mx1gy"]
+render_priority = 0
+shader = ExtResource("3_kb2qk")
+shader_parameter/camera_far = 10000.0
+
+[sub_resource type="SphereMesh" id="SphereMesh_oywl5"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_36co1"]
+transparency = 1
+albedo_color = Color(1, 1, 1, 0.07450981)
+
+[node name="VertexPainterTopUi" type="Control" node_paths=PackedStringArray("vertex_painter_3d", "input_color", "input_brush_size", "input_blend_mode", "input_weight", "btn_exit")]
+custom_minimum_size = Vector2(1000, 48)
+layout_mode = 3
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_bottom = 48.0
+grow_horizontal = 2
+script = ExtResource("1_3lenc")
+vertex_painter_3d = NodePath("Painter")
+input_color = NodePath("Panel/HBoxContainer/ColorPickerButton")
+input_brush_size = NodePath("Panel/HBoxContainer/VBoxContainer/BrushSize")
+input_blend_mode = NodePath("Panel/HBoxContainer/BlendModes")
+input_weight = NodePath("Panel/HBoxContainer/VBoxContainer2/BrushWeight")
+btn_exit = NodePath("Panel/HBoxContainer/BtnExit")
+
+[node name="Panel" type="Panel" parent="."]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -400.0
+offset_right = 400.0
+offset_bottom = 48.0
+grow_horizontal = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="TextureRect" type="TextureRect" parent="Panel/HBoxContainer"]
+layout_mode = 2
+texture = ExtResource("2_7gh0f")
+expand_mode = 3
+stretch_mode = 6
+
+[node name="ColorPickerButton" type="ColorPickerButton" parent="Panel/HBoxContainer"]
+layout_mode = 2
+text = "Color"
+color = Color(1, 1, 1, 1)
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel/HBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Panel/HBoxContainer/VBoxContainer"]
+layout_mode = 2
+text = "Size"
+
+[node name="BrushSize" type="HSlider" parent="Panel/HBoxContainer/VBoxContainer"]
+custom_minimum_size = Vector2(256, 0)
+layout_mode = 2
+min_value = 0.1
+max_value = 20.0
+step = 0.01
+value = 0.1
+
+[node name="BlendModes" type="OptionButton" parent="Panel/HBoxContainer"]
+layout_mode = 2
+selected = 0
+item_count = 4
+popup/item_0/text = "Mix"
+popup/item_0/id = 0
+popup/item_1/text = "Add"
+popup/item_1/id = 1
+popup/item_2/text = "Subtract"
+popup/item_2/id = 2
+popup/item_3/text = "Multiply"
+popup/item_3/id = 3
+
+[node name="VBoxContainer2" type="VBoxContainer" parent="Panel/HBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Panel/HBoxContainer/VBoxContainer2"]
+layout_mode = 2
+text = "Weight"
+
+[node name="BrushWeight" type="HSlider" parent="Panel/HBoxContainer/VBoxContainer2"]
+custom_minimum_size = Vector2(256, 0)
+layout_mode = 2
+max_value = 1.0
+step = 0.01
+value = 1.0
+
+[node name="BtnExit" type="Button" parent="Panel/HBoxContainer"]
+layout_mode = 2
+text = "Exit"
+
+[node name="Painter" type="Node3D" parent="." node_paths=PackedStringArray("preview_sphere")]
+script = ExtResource("2_4gsef")
+preview_sphere = NodePath("../PreviewSphere")
+
+[node name="SubViewport" type="SubViewport" parent="."]
+handle_input_locally = false
+canvas_item_default_texture_filter = 0
+positional_shadow_atlas_size = 0
+positional_shadow_atlas_quad_0 = 0
+positional_shadow_atlas_quad_1 = 0
+positional_shadow_atlas_quad_2 = 0
+positional_shadow_atlas_quad_3 = 0
+canvas_cull_mask = 4293918720
+size = Vector2i(2, 2)
+render_target_update_mode = 1
+
+[node name="MouseCamera3D" type="Camera3D" parent="SubViewport"]
+visible = false
+cull_mask = 1
+environment = SubResource("Environment_7gh0f")
+projection = 1
+size = 0.1
+far = 10000.0
+
+[node name="ScreenQuad" type="MeshInstance3D" parent="SubViewport/MouseCamera3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.5)
+mesh = SubResource("QuadMesh_lgv7d")
+surface_material_override/0 = SubResource("ShaderMaterial_mx1gy")
+
+[node name="PreviewSphere" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.25, 0, 0, 0, 0.25, 0, 0, 0, 0.25, 0, 0, 0)
+visible = false
+layers = 2
+mesh = SubResource("SphereMesh_oywl5")
+surface_material_override/0 = SubResource("StandardMaterial3D_36co1")
