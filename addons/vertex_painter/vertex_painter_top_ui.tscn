@@ -122,6 +122,7 @@ popup/item_3/text = "Multiply"
 popup/item_3/id = 3
 
 [node name="SculptModes" type="OptionButton" parent="Panel/HBoxContainer"]
+visible = false
 layout_mode = 2
 selected = 0
 item_count = 3
@@ -139,6 +140,8 @@ size_flags_horizontal = 3
 [node name="BtnExit" type="Button" parent="Panel/HBoxContainer"]
 layout_mode = 2
 text = "Exit"
+alignment = 2
+expand_icon = true
 
 [node name="Painter" type="Node3D" parent="." node_paths=PackedStringArray("preview_sphere")]
 script = ExtResource("2_4gsef")

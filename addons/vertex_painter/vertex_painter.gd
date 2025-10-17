@@ -14,12 +14,16 @@ func _enter_tree():
 
 	btn_enable = Button.new()
 	btn_enable.text = "Vertex Paint"
+	btn_enable.flat = true
 	add_control_to_container(CONTAINER_SPATIAL_EDITOR_MENU, btn_enable)
 
 	btn_enable.pressed.connect(func() -> void:
 		var target = find_target()
 		if is_instance_valid(target):
-			vertex_painter_3d.enable(target)
+			if vertex_painter_3d.is_enabled():
+				vertex_painter_3d.disable()
+			else:
+				vertex_painter_3d.enable(target)
 	)
 
 	vertex_painter_3d = main_panel_instance.vertex_painter_3d
