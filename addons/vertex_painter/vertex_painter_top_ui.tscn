@@ -17,10 +17,11 @@ shader_parameter/camera_far = 10000.0
 [sub_resource type="SphereMesh" id="SphereMesh_oywl5"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_36co1"]
+render_priority = 10
 transparency = 1
 albedo_color = Color(1, 1, 1, 0.07450981)
 
-[node name="VertexPainterTopUi" type="Control" node_paths=PackedStringArray("vertex_painter_3d", "input_color", "input_brush_size", "input_blend_mode", "input_weight", "btn_exit", "label_size", "label_weight", "input_edit_mode")]
+[node name="VertexPainterTopUi" type="Control" node_paths=PackedStringArray("vertex_painter_3d", "input_color", "input_brush_size", "input_blend_mode", "input_weight", "input_sculpt_mode", "btn_exit", "label_size", "label_weight", "input_edit_mode")]
 custom_minimum_size = Vector2(1000, 48)
 layout_mode = 3
 anchors_preset = 5
@@ -34,6 +35,7 @@ input_color = NodePath("Panel/HBoxContainer/ColorPickerButton")
 input_brush_size = NodePath("Panel/HBoxContainer/VBoxContainer/BrushSize")
 input_blend_mode = NodePath("Panel/HBoxContainer/BlendModes")
 input_weight = NodePath("Panel/HBoxContainer/VBoxContainer2/BrushWeight")
+input_sculpt_mode = NodePath("Panel/HBoxContainer/SculptModes")
 btn_exit = NodePath("Panel/HBoxContainer/BtnExit")
 label_size = NodePath("Panel/HBoxContainer/VBoxContainer/Label")
 label_weight = NodePath("Panel/HBoxContainer/VBoxContainer2/Label")
@@ -46,7 +48,7 @@ anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
 offset_left = -400.0
-offset_right = 400.0
+offset_right = 500.0
 offset_bottom = 48.0
 grow_horizontal = 2
 
@@ -72,17 +74,12 @@ popup/item_1/id = 1
 popup/item_2/text = "Sculpt"
 popup/item_2/id = 2
 
-[node name="ColorPickerButton" type="ColorPickerButton" parent="Panel/HBoxContainer"]
-layout_mode = 2
-text = "Color"
-color = Color(1, 1, 1, 1)
-
 [node name="VBoxContainer" type="VBoxContainer" parent="Panel/HBoxContainer"]
 layout_mode = 2
 
 [node name="Label" type="Label" parent="Panel/HBoxContainer/VBoxContainer"]
 layout_mode = 2
-text = "Size"
+text = "Size 0.1"
 
 [node name="BrushSize" type="HSlider" parent="Panel/HBoxContainer/VBoxContainer"]
 custom_minimum_size = Vector2(256, 0)
@@ -91,6 +88,25 @@ min_value = 0.1
 max_value = 20.0
 step = 0.01
 value = 0.1
+
+[node name="VBoxContainer2" type="VBoxContainer" parent="Panel/HBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Panel/HBoxContainer/VBoxContainer2"]
+layout_mode = 2
+text = "Weight 1.0"
+
+[node name="BrushWeight" type="HSlider" parent="Panel/HBoxContainer/VBoxContainer2"]
+custom_minimum_size = Vector2(256, 0)
+layout_mode = 2
+max_value = 1.0
+step = 0.01
+value = 1.0
+
+[node name="ColorPickerButton" type="ColorPickerButton" parent="Panel/HBoxContainer"]
+layout_mode = 2
+text = "Color"
+color = Color(1, 1, 1, 1)
 
 [node name="BlendModes" type="OptionButton" parent="Panel/HBoxContainer"]
 layout_mode = 2
@@ -105,19 +121,16 @@ popup/item_2/id = 2
 popup/item_3/text = "Multiply"
 popup/item_3/id = 3
 
-[node name="VBoxContainer2" type="VBoxContainer" parent="Panel/HBoxContainer"]
+[node name="SculptModes" type="OptionButton" parent="Panel/HBoxContainer"]
 layout_mode = 2
-
-[node name="Label" type="Label" parent="Panel/HBoxContainer/VBoxContainer2"]
-layout_mode = 2
-text = "Weight"
-
-[node name="BrushWeight" type="HSlider" parent="Panel/HBoxContainer/VBoxContainer2"]
-custom_minimum_size = Vector2(256, 0)
-layout_mode = 2
-max_value = 1.0
-step = 0.01
-value = 1.0
+selected = 0
+item_count = 3
+popup/item_0/text = "Raise"
+popup/item_0/id = 0
+popup/item_1/text = "Lower"
+popup/item_1/id = 1
+popup/item_2/text = "Flatten"
+popup/item_2/id = 2
 
 [node name="Spacer" type="Control" parent="Panel/HBoxContainer"]
 layout_mode = 2

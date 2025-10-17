@@ -23,7 +23,13 @@ enum EditMode {
 	SCULPT = 2
 }
 
-var current_mode = EditMode.PAINT
+enum SculptMode {
+	RAISE,
+	LOWER,
+	FLATTEN
+}
+
+var current_mode := EditMode.PAINT
 
 ## Brush size in world units
 var brush_size: float = 0.1 : 
@@ -32,10 +38,9 @@ var brush_size: float = 0.1 :
 		brush_size = value
 
 var brush_color: Color = Color.WHITE
-
 var brush_weight: float = 1.0
-
 var brush_blend_mode: BlendMode = BlendMode.MIX
+var sculpt_mode: SculptMode = SculptMode.RAISE
 
 var mesh_i: MeshInstance3D = null
 var click_active := false
@@ -167,7 +172,33 @@ func blur() -> void:
 	active_mdt.commit_to_surface(mesh_i.mesh)
 
 func sculpt() -> void:
-	pass
+	var vertices := get_vertices_in_radius(active_mdt, mesh_i.global_transform, cursor_position, brush_size)
+	match sculpt_mode:
+		SculptMode.RAISE:
+			for vertex in vertices:
+				var old_position := active_mdt.get_vertex(vertex)
+				var new_position := old_position + Vector3(0, 1, 0)
+				active_mdt.set_vertex(vertex, lerp(old_position, new_position, brush_weight))
+		SculptMode.LOWER:
+			for vertex in vertices:
+				var old_position := active_mdt.get_vertex(vertex)
+				var new_position := old_position - Vector3(0, 1, 0)
+				active_mdt.set_vertex(vertex, lerp(old_position, new_position, brush_weight))
+		SculptMode.FLATTEN:
+			var y_local = (cursor_position * mesh_i.global_transform).y
+			for vertex in vertices:
+				var old_position := active_mdt.get_vertex(vertex)
+				var new_position := Vector3(old_position.x, y_local, old_position.z)
+				active_mdt.set_vertex(vertex, lerp(old_position, new_position, brush_weight))
+	
+	mesh_i.mesh.clear_surfaces()
+	active_mdt.commit_to_surface(mesh_i.mesh)
+	
+	var st = SurfaceTool.new()
+	st.create_from(mesh_i.mesh, 0)
+	st.generate_normals()
+	st.generate_tangents()
+	mesh_i.mesh = st.commit()
 
 func get_vertices_in_radius(mdt: MeshDataTool, mesh_transform: Transform3D, center: Vector3, radius: float) -> PackedInt32Array:
 	var radius_squared := (radius * 0.5) * (radius * 0.5)

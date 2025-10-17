@@ -25,8 +25,9 @@ https://github.com/bikemurt/godot-vertex-painter/assets/23486102/fea58b3f-8b71-4
 - Added weight slider
 - Added preview of brush size
 - Added Undo
-- Added blend modes. Currently there are Mix, Add, Subtract and Multiply
+- Added blend modes: Mix, Add, Subtract and Multiply
 - Added Blur tool
+- Added simple y-axis only sculpting tools: Raise, Lower and Flatten. (Useful for terrain)
 - Improved accuracy
 
 **V2.0: May 6, 2024**

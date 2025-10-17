@@ -7,6 +7,7 @@ extends Control
 @export var input_brush_size: Slider
 @export var input_blend_mode: OptionButton
 @export var input_weight: Slider
+@export var input_sculpt_mode: OptionButton
 @export var btn_exit: Button
 
 @export var label_size: Label
@@ -24,6 +25,7 @@ func _ready() -> void:
 	input_blend_mode.item_selected.connect(func(_idx)->void: update_from_ui())
 	input_weight.value_changed.connect(func(_value)->void: update_from_ui())
 	input_edit_mode.item_selected.connect(func(idx) -> void: update_from_ui())
+	input_sculpt_mode.item_selected.connect(func(idx) -> void: update_from_ui())
 
 	btn_exit.pressed.connect(func() -> void:
 		vertex_painter_3d.disable()	
@@ -37,6 +39,7 @@ func update_from_ui() -> void:
 	vertex_painter_3d.brush_weight = input_weight.value
 	vertex_painter_3d.brush_blend_mode = input_blend_mode.selected as VertexPainter3D.BlendMode
 	vertex_painter_3d.current_mode = input_edit_mode.selected as VertexPainter3D.EditMode
+	vertex_painter_3d.sculpt_mode = input_sculpt_mode.selected as VertexPainter3D.SculptMode
 	update_ui()
 
 func update_ui() -> void:
@@ -45,4 +48,4 @@ func update_ui() -> void:
 
 	input_color.visible = vertex_painter_3d.current_mode == VertexPainter3D.EditMode.PAINT
 	input_blend_mode.visible = vertex_painter_3d.current_mode == VertexPainter3D.EditMode.PAINT
-	
+	input_sculpt_mode.visible = vertex_painter_3d.current_mode == VertexPainter3D.EditMode.SCULPT
