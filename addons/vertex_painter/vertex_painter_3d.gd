@@ -17,8 +17,16 @@ enum BlendMode {
 	MULTIPLY = 3
 }
 
+enum EditMode {
+	PAINT = 0,
+	BLUR = 1,
+	SCULPT = 2
+}
+
+var current_mode = EditMode.PAINT
+
 ## Brush size in world units
-var brush_size: float = 0.0 : 
+var brush_size: float = 0.1 : 
 	set(value):
 		preview_sphere.scale = Vector3(value, value, value)
 		brush_size = value
@@ -91,12 +99,11 @@ func start_paint(event: InputEvent) -> void:
 	click_active = true
 	process_move(event)
 
-func stop_paint() -> void:	
+func stop_paint() -> void:
 	if pre_mat == null:
 		pre_mat = VERTEX_COLOR
 		mesh_i.set_surface_override_material(0, pre_mat)
 	click_active = false
-	
 	
 	var undo_redo := EditorInterface.get_editor_undo_redo()
 	undo_redo.create_action("Vertex Paint")
@@ -119,7 +126,6 @@ func paint() -> void:
 	for idx in vertices:
 		var old_color = active_mdt.get_vertex_color(idx)
 		var new_color = brush_color
-
 		match brush_blend_mode:
 			BlendMode.MIX:
 				new_color = lerp(old_color, brush_color, brush_weight)
@@ -133,6 +139,35 @@ func paint() -> void:
 		active_mdt.set_vertex_color(idx, new_color)
 		mesh_i.mesh.clear_surfaces()
 		active_mdt.commit_to_surface(mesh_i.mesh)
+
+func blur() -> void:
+	var vertices := get_vertices_in_radius(active_mdt, mesh_i.global_transform, cursor_position, brush_size)
+	var new_colors: Dictionary[int, Color] = {}
+
+	for vertex in vertices:
+		var old_color := active_mdt.get_vertex_color(vertex)
+		var neighbor_color := Vector3(old_color.r, old_color.g, old_color.b)
+		var neighbor_count := 1
+
+		for edge in active_mdt.get_vertex_edges(vertex):
+			for edge_vertex in [active_mdt.get_edge_vertex(edge, 0), active_mdt.get_edge_vertex(edge, 1)]:
+				if edge_vertex != vertex:
+					var c := active_mdt.get_vertex_color(edge_vertex)
+					neighbor_color += Vector3(c.r, c.g, c.b)
+					neighbor_count += 1
+		
+		neighbor_color /= neighbor_count
+		new_colors[vertex] = Color(neighbor_color.x, neighbor_color.y, neighbor_color.z)
+
+	for vertex in new_colors.keys():
+		var old_color = active_mdt.get_vertex_color(vertex)
+		active_mdt.set_vertex_color(vertex, lerp(old_color, new_colors[vertex], brush_weight))
+
+	mesh_i.mesh.clear_surfaces()
+	active_mdt.commit_to_surface(mesh_i.mesh)
+
+func sculpt() -> void:
+	pass
 
 func get_vertices_in_radius(mdt: MeshDataTool, mesh_transform: Transform3D, center: Vector3, radius: float) -> PackedInt32Array:
 	var radius_squared := (radius * 0.5) * (radius * 0.5)
@@ -148,7 +183,14 @@ func get_vertices_in_radius(mdt: MeshDataTool, mesh_transform: Transform3D, cent
 func process_move(_event: InputEvent) -> void:
 	if not working:
 		working = true
-		paint()
+		
+		if current_mode == EditMode.PAINT:
+			paint()
+		elif current_mode == EditMode.BLUR:
+			blur()
+		elif current_mode == EditMode.SCULPT:
+			sculpt()
+		
 		await get_tree().create_timer(0.05).timeout
 		working = false
 

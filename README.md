@@ -19,13 +19,14 @@ https://github.com/bikemurt/godot-vertex-painter/assets/23486102/fea58b3f-8b71-4
 - v4.5.stable
 
 ---
-**V2.1: October 16, 2025**
+**V2.1: October 17, 2025**
 - Now any Mesh resource can be used as a base
 - Moved controls to top of viewport
 - Added weight slider
 - Added preview of brush size
 - Added Undo
 - Added blend modes. Currently there are Mix, Add, Subtract and Multiply
+- Added Blur tool
 - Improved accuracy
 
 **V2.0: May 6, 2024**
