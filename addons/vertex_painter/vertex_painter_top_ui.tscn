@@ -1,8 +1,7 @@
-[gd_scene load_steps=10 format=3 uid="uid://dmeqpm3skglm2"]
+[gd_scene load_steps=9 format=3 uid="uid://dmeqpm3skglm2"]
 
 [ext_resource type="Script" uid="uid://dobpv4xos5msa" path="res://addons/vertex_painter/vertex_painter_ui.gd" id="1_3lenc"]
 [ext_resource type="Script" uid="uid://bgwl2arbuma7" path="res://addons/vertex_painter/vertex_painter_3d.gd" id="2_4gsef"]
-[ext_resource type="Texture2D" uid="uid://djxwwu4jm22dg" path="res://addons/vertex_painter/icon.png" id="2_7gh0f"]
 [ext_resource type="Shader" uid="uid://etvg4calsus4" path="res://addons/vertex_painter/gpu_depth.gdshader" id="3_kb2qk"]
 
 [sub_resource type="Environment" id="Environment_7gh0f"]
@@ -21,7 +20,7 @@ shader_parameter/camera_far = 10000.0
 transparency = 1
 albedo_color = Color(1, 1, 1, 0.07450981)
 
-[node name="VertexPainterTopUi" type="Control" node_paths=PackedStringArray("vertex_painter_3d", "input_color", "input_brush_size", "input_blend_mode", "input_weight", "btn_exit")]
+[node name="VertexPainterTopUi" type="Control" node_paths=PackedStringArray("vertex_painter_3d", "input_color", "input_brush_size", "input_blend_mode", "input_weight", "btn_exit", "label_size", "label_weight", "input_edit_mode")]
 custom_minimum_size = Vector2(1000, 48)
 layout_mode = 3
 anchors_preset = 5
@@ -36,6 +35,9 @@ input_brush_size = NodePath("Panel/HBoxContainer/VBoxContainer/BrushSize")
 input_blend_mode = NodePath("Panel/HBoxContainer/BlendModes")
 input_weight = NodePath("Panel/HBoxContainer/VBoxContainer2/BrushWeight")
 btn_exit = NodePath("Panel/HBoxContainer/BtnExit")
+label_size = NodePath("Panel/HBoxContainer/VBoxContainer/Label")
+label_weight = NodePath("Panel/HBoxContainer/VBoxContainer2/Label")
+input_edit_mode = NodePath("Panel/HBoxContainer/ModeSelector")
 
 [node name="Panel" type="Panel" parent="."]
 custom_minimum_size = Vector2(0, 48)
@@ -58,11 +60,17 @@ grow_vertical = 2
 theme_override_constants/separation = 10
 alignment = 1
 
-[node name="TextureRect" type="TextureRect" parent="Panel/HBoxContainer"]
+[node name="ModeSelector" type="OptionButton" parent="Panel/HBoxContainer"]
 layout_mode = 2
-texture = ExtResource("2_7gh0f")
-expand_mode = 3
-stretch_mode = 6
+expand_icon = true
+selected = 0
+item_count = 3
+popup/item_0/text = "Paint"
+popup/item_0/id = 0
+popup/item_1/text = "Blur"
+popup/item_1/id = 1
+popup/item_2/text = "Sculpt"
+popup/item_2/id = 2
 
 [node name="ColorPickerButton" type="ColorPickerButton" parent="Panel/HBoxContainer"]
 layout_mode = 2
@@ -110,6 +118,10 @@ layout_mode = 2
 max_value = 1.0
 step = 0.01
 value = 1.0
+
+[node name="Spacer" type="Control" parent="Panel/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
 
 [node name="BtnExit" type="Button" parent="Panel/HBoxContainer"]
 layout_mode = 2
